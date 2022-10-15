@@ -111,7 +111,7 @@ public class ApiConfig {
     }
 
     public void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
-        String apiUrl = Hawk.get(HawkConfig.API_URL, "");
+        String apiUrl = Hawk.get(HawkConfig.API_URL, "https://henryqinup.github.io/JK/Q2WForever.json");
         if (apiUrl.isEmpty()) {
             callback.error("-1");
             return;
