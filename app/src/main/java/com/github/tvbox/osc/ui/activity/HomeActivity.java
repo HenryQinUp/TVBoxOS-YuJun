@@ -585,7 +585,7 @@ public class HomeActivity extends BaseActivity {
 
     void showSiteSwitch() {
         List<SourceBean> sites = ApiConfig.get().getSourceBeanList();
-        if (sites.size() > 10000) {
+        if (sites.size() > 0) {
             String homeSourceKey = ApiConfig.get().getHomeSourceBean().getKey();
             SelectDialog<SourceBean> dialog = new SelectDialog<>(HomeActivity.this);
             dialog.setTip("请选择首页数据源");
