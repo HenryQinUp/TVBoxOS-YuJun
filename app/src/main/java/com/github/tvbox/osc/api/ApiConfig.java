@@ -6,6 +6,7 @@ import android.text.TextUtils;
 import android.util.Base64;
 
 import com.github.catvod.crawler.JarLoader;
+import com.github.catvod.crawler.JsLoader;
 import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.bean.LiveChannelGroup;
@@ -64,6 +65,7 @@ public class ApiConfig {
     private SourceBean emptyHome = new SourceBean();
 
     private JarLoader jarLoader = new JarLoader();
+    private JsLoader jsLoader = new JsLoader();
 
     private String userAgent = "okhttp/3.15";
 
@@ -112,6 +114,16 @@ public class ApiConfig {
             e.printStackTrace();
         }
         return json;
+    }
+
+    private static byte[] getImgJar(String body){
+        Pattern pattern = Pattern.compile("[A-Za-z0]{8}\\*\\*");
+        Matcher matcher = pattern.matcher(body);
+        if(matcher.find()){
+            body = body.substring(body.indexOf(matcher.group()) + 10);
+            return Base64.decode(body, Base64.DEFAULT);
+        }
+        return "".getBytes();
     }
 
     public void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
@@ -229,6 +241,8 @@ public class ApiConfig {
             }
         }
 
+        boolean isJarInImg = jarUrl.startsWith("img+");
+        jarUrl = jarUrl.replace("img+", "");
         OkGo.<File>get(jarUrl)
                 .headers("User-Agent", userAgent)
                 .headers("Accept", requestAccept)
@@ -242,7 +256,13 @@ public class ApiConfig {
                 if (cache.exists())
                     cache.delete();
                 FileOutputStream fos = new FileOutputStream(cache);
-                fos.write(response.body().bytes());
+                if(isJarInImg) {
+                    String respData = response.body().string();
+                    byte[] imgJar = getImgJar(respData);
+                    fos.write(imgJar);
+                } else {
+                    fos.write(response.body().bytes());
+                }
                 fos.flush();
                 fos.close();
                 return cache;
@@ -546,6 +566,8 @@ public class ApiConfig {
     }
 
     public Spider getCSP(SourceBean sourceBean) {
+        boolean js = sourceBean.getApi().endsWith(".js") || sourceBean.getApi().contains(".js?");
+        if (js) return jsLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
         return jarLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
     }
 

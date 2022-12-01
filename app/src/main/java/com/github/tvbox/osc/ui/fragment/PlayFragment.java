@@ -77,6 +77,8 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -123,6 +125,13 @@ public class PlayFragment extends BaseLazyFragment {
         return R.layout.activity_play;
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void refresh(RefreshEvent event) {
+        if (event.type == RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE) {
+            mController.mSubtitleView.setTextSize((int) event.obj);
+        }
+    }
+
     @Override
     protected void init() {
         initView();
@@ -131,6 +140,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private void initView() {
+        EventBus.getDefault().register(this);
         mHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
@@ -511,6 +521,7 @@ public class PlayFragment extends BaseLazyFragment {
             url="http://home.jundie.top:666/unBom.php?m3u8="+url;
         }
         String finalUrl = url;
+        if (mActivity == null) return;
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1151,6 +1162,9 @@ public class PlayFragment extends BaseLazyFragment {
                                     Iterator<String> keys = hds.keys();
                                     while (keys.hasNext()) {
                                         String key = keys.next();
+                                        if (headers == null) {
+                                            headers = new HashMap<>();
+                                        }
                                         headers.put(key, hds.getString(key));
                                     }
                                 } catch (Throwable th) {
@@ -1268,6 +1282,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void stopLoadWebView(boolean destroy) {
+        if (mActivity == null) return;
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
